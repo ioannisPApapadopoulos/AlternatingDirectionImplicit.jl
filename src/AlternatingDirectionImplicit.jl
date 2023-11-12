@@ -35,23 +35,24 @@ function ADI_shifts(J, a, b, c, d, tol=1e-15)
 
     [mobius(-α*i, a, b, c, d, α) for i = dn], [mobius(α*i, a, b, c, d, α) for i = dn]
 end
-"ADI method for solving standard sylvester AX - XB = F"
-function adi(A, B, C, F, a, b, c, d; tolerance=1e-15, factorize=factorize)
-    # Modified slightly by John to allow for the mass matrix
-    n = size(A)[1]
-    X = zeros(axes(A))
+
+function adi(A::AbstractMatrix{T}, B::AbstractMatrix{T}, C::AbstractMatrix{T}, D::AbstractMatrix{T}, F::AbstractMatrix{T}, a::T, b::T, c::T, d::T; tolerance=1e-15, factorize=factorize) where T
+    X = zeros((size(A,1), size(B,1)))
 
     γ = (c-a)*(d-b)/((c-b)*(d-a))
     J = Int(ceil(log(16γ)*log(4/tolerance)/π^2))
-    # J = 200
+
     p, q = ADI_shifts(J, a, b, c, d, tolerance)
 
     for j = 1:J
-        X = ((A/p[j] - C)*X - F/p[j])/factorize(C - B/p[j])
-        X = factorize(C - A/q[j])\(X*(B/q[j] - C) - F/q[j])
+        X = ((A/p[j] - C)*X - F/p[j])/factorize(D - B/p[j])
+        X = factorize(C - A/q[j])\(X*(B/q[j] - D) - F/q[j])
     end
 
     X
 end
+adi(A::AbstractMatrix{T}, B::AbstractMatrix{T}, C::AbstractMatrix{T}, F::AbstractMatrix{T}, a::T, b::T, c::T, d::T; tolerance=1e-15, factorize=factorize) where T =
+    adi(A,B,C,C,F,a,b,c,d,tolerance=tolerance,factorize=factorize)
+
 
 end # module AlternatingDirectionImplicit
